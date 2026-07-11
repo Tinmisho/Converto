@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Converto</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0c0d12;
+      --panel: #14151c;
+      --panel2: #1c1e28;
+      --border: #2a2c38;
+      --accent: #6c8aff;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e6e7f0;
+      --muted: #767a8c;
+    }
+    html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); }
+    body { font-family: system-ui, -apple-system, sans-serif; color: var(--text); font-size: 14px; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 52px 1fr;
+      height: 100vh;
+      background: var(--bg);
+    }
+
+    /* Topbar */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+      background: var(--panel);
+    }
+    .logo-row { display: flex; align-items: center; gap: 9px; }
+    .logo { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+    .logo svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .appname { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+    .v { font-size: 10px; color: var(--muted); background: var(--panel2); border: 0.5px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 3px; }
+    .topstats { display: flex; gap: 1rem; }
+    .stat { font-size: 12px; color: var(--muted); }
+    .stat b { color: var(--text); font-weight: 500; }
+
+    /* Sidebar */
+    .sidebar { border-right: 0.5px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+    .ss { padding: 0.875rem; border-bottom: 0.5px solid var(--border); }
+    .sl { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.6rem; }
+    .dropzone { border: 1.5px dashed var(--border); border-radius: 8px; padding: 1.1rem 0.75rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .dropzone:hover, .dropzone.over { border-color: var(--accent); background: rgba(108,138,255,0.06); }
+    .dropzone input { display: none; }
+    .dt { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .ds { font-size: 11px; color: var(--muted); }
+    .ds b { color: var(--accent); font-weight: 500; }
+    .fmts { display: flex; flex-direction: column; gap: 7px; }
+    .fgl { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+    .fr { display: flex; flex-wrap: wrap; gap: 3px; }
+    .fb { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; border: 0.5px solid; }
+    .fb.d { background: rgba(108,138,255,0.12); color: var(--accent); border-color: rgba(108,138,255,0.3); }
+    .fb.i { background: rgba(74,222,128,0.1); color: var(--green); border-color: rgba(74,222,128,0.25); }
+    .opts { padding: 0.875rem; flex: 1; }
+    .or { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.7rem; }
+    .ol { font-size: 12px; color: var(--muted); }
+    select { background: var(--panel2); border: 0.5px solid var(--border); border-radius: 5px; padding: 3px 7px; font-size: 12px; color: var(--text); outline: none; cursor: pointer; }
+    select:focus { border-color: var(--accent); }
+    .tgl { position: relative; width: 28px; height: 16px; }
+    .tgl input { opacity: 0; width: 0; height: 0; }
+    .tslider { position: absolute; inset: 0; background: var(--border); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .tgl input:checked + .tslider { background: var(--accent); }
+    .tslider:before { content: ''; position: absolute; height: 10px; width: 10px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+    .tgl input:checked + .tslider:before { transform: translateX(12px); }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .mh { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; border-bottom: 0.5px solid var(--border); }
+    .mt { font-size: 12px; color: var(--muted); }
+    .mt b { color: var(--text); }
+    .acts { display: flex; gap: 7px; }
+    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 0.5px solid var(--border); background: var(--panel2); color: var(--text); cursor: pointer; white-space: nowrap; transition: border-color 0.15s; }
+    .btn:hover { border-color: var(--muted); }
+    .btn:active { transform: scale(0.97); }
+    .btn-p { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-p:hover { opacity: 0.88; background: var(--accent); }
+    .btn svg, .btn-p svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* Queue */
+    .queue { flex: 1; overflow-y: auto; padding: 0.875rem 1.25rem; }
+    .queue::-webkit-scrollbar { width: 4px; }
+    .queue::-webkit-scrollbar-track { background: transparent; }
+    .queue::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 0 0 0.5rem; text-align: left; border-bottom: 0.5px solid var(--border); }
+    td { padding: 0.65rem 0; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .fc { display: flex; align-items: center; gap: 9px; }
+    .fi { width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .fi.d { background: rgba(108,138,255,0.15); }
+    .fi.i { background: rgba(74,222,128,0.12); }
+    .fi svg { width: 18px; height: 18px; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .fn { font-size: 13px; font-weight: 500; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fm { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .ri-row { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
+    .rl { font-size: 10px; color: var(--muted); }
+    .ri { width: 62px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 5px; padding: 3px 5px; font-size: 11px; color: var(--text); outline: none; }
+    .ri:focus { border-color: var(--accent); }
+    .rsep { font-size: 10px; color: var(--border); }
+    .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; white-space: nowrap; display: inline-block; }
+    .pill.pending { background: var(--panel2); color: var(--muted); border: 0.5px solid var(--border); }
+    .pill.converting { background: rgba(251,191,36,0.15); color: var(--yellow); }
+    .pill.done { background: rgba(74,222,128,0.12); color: var(--green); }
+    .pill.failed { background: rgba(248,113,113,0.12); color: var(--red); }
+    .pbar { height: 2px; background: var(--panel2); border-radius: 2px; margin-top: 4px; overflow: hidden; width: 180px; }
+    .pbar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+    .tda { display: flex; align-items: center; gap: 7px; justify-content: flex-end; }
+    .icon-btn { background: none; border: none; cursor: pointer; padding: 3px; border-radius: 4px; display: flex; align-items: center; }
+    .icon-btn svg { width: 15px; height: 15px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-btn.dl { color: var(--green); }
+    .icon-btn.rmv { color: var(--muted); }
+    .icon-btn.rmv:hover { color: var(--red); }
+    .icon-btn.play { color: var(--accent); border: 0.5px solid var(--border); padding: 3px 8px; font-size: 11px; font-weight: 500; }
+    .icon-btn.play:hover { border-color: var(--accent); }
+
+    /* Empty state */
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 10px; padding: 2rem; }
+    .empty svg { width: 40px; height: 40px; opacity: 0.2; stroke: var(--muted); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .empty p { font-size: 13px; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo-row">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </div>
+      <span class="appname">Converto <span class="v">v0.1</span></span>
+    </div>
+    <div class="topstats" id="topstats"></div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="ss">
+      <div class="sl">Add files</div>
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" multiple
+          accept=".pdf,.docx,.odt,.rtf,.epub,.html,.md,.txt,.png,.jpg,.jpeg,.webp,.avif,.heic,.tiff,.gif,.bmp" />
+        <svg style="width:26px;height:26px;display:block;margin:0 auto 7px;opacity:.4;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        <div class="dt">Drop or click to browse</div>
+        <div class="ds">Up to <b>100 MB</b> per file</div>
+      </div>
+    </div>
+
+    <div class="ss">
+      <div class="sl">Supported formats</div>
+      <div class="fmts">
+        <div>
+          <div class="fgl">Documents</div>
+          <div class="fr">
+            <span class="fb d">PDF</span><span class="fb d">DOCX</span><span class="fb d">ODT</span>
+            <span class="fb d">RTF</span><span class="fb d">EPUB</span><span class="fb d">HTML</span>
+            <span class="fb d">MD</span><span class="fb d">TXT</span>
+          </div>
+        </div>
+        <div>
+          <div class="fgl">Images</div>
+          <div class="fr">
+            <span class="fb i">PNG</span><span class="fb i">JPG</span><span class="fb i">WEBP</span>
+            <span class="fb i">AVIF</span><span class="fb i">HEIC</span><span class="fb i">TIFF</span>
+            <span class="fb i">GIF</span><span class="fb i">BMP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="opts">
+      <div class="sl">Options</div>
+      <div class="or">
+        <span class="ol">Output quality</span>
+        <select id="optQuality"><option>High</option><option>Medium</option><option>Low</option></select>
+      </div>
+      <div class="or">
+        <span class="ol">Keep filename</span>
+        <label class="tgl"><input type="checkbox" checked id="optKeepName"><span class="tslider"></span></label>
+      </div>
+      <div class="or">
+        <span class="ol">Auto-download</span>
+        <label class="tgl"><input type="checkbox" id="optAutoDl"><span class="tslider"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="mh">
+      <span class="mt" id="queueTitle">Queue · <b>0 files</b></span>
+      <div class="acts">
+        <button class="btn btn-p" onclick="convertAll()">
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Convert all
+        </button>
+        <button class="btn" onclick="downloadAll()">
+          <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+          Download all
+        </button>
+        <button class="btn" onclick="clearAll()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Clear
+        </button>
+      </div>
+    </div>
+    <div class="queue" id="queueArea"></div>
+  </div>
+</div>
+
+<script>
+const TARGETS = {
+  pdf:  ['docx','odt','html','txt'],
+  docx: ['pdf','odt','html','txt','md','rtf','epub'],
+  odt:  ['pdf','docx','html','txt'],
+  rtf:  ['pdf','docx','odt','txt'],
+  epub: ['pdf','docx','html','txt','md'],
+  html: ['pdf','docx','md','txt'],
+  md:   ['pdf','docx','html','txt','epub'],
+  txt:  ['pdf','docx','html','md'],
+  png:  ['jpg','webp','avif','tiff','bmp'],
+  jpg:  ['png','webp','avif','tiff','bmp'],
+  jpeg: ['png','webp','avif','tiff','bmp'],
+  webp: ['png','jpg','avif','tiff'],
+  avif: ['png','jpg','webp'],
+  heic: ['jpg','png','webp'],
+  tiff: ['png','jpg','webp'],
+  gif:  ['png','jpg','webp'],
+  bmp:  ['png','jpg','webp','tiff'],
+}
+const IMG_EXTS = new Set(['png','jpg','jpeg','webp','avif','heic','tiff','gif','bmp'])
+let queue = []
+
+function isImg(e) { return IMG_EXTS.has(e) }
+function fmtSize(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB' }
+function getExt(name) { return name.split('.').pop().toLowerCase() }
+
+// Drop zone
+const dz = document.getElementById('dropzone')
+const fi = document.getElementById('fileInput')
+dz.addEventListener('click', () => fi.click())
+fi.addEventListener('change', e => { addFiles(e.target.files); fi.value = '' })
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over') })
+dz.addEventListener('dragleave', () => dz.classList.remove('over'))
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); addFiles(e.dataTransfer.files) })
+
+function addFiles(files) {
+  let added = false
+  for (const f of files) {
+    const ext = getExt(f.name)
+    if (!TARGETS[ext]) continue
+    queue.push({
+      id: Math.random().toString(36).slice(2),
+      file: f, ext,
+      group: isImg(ext) ? 'i' : 'd',
+      target: TARGETS[ext][0],
+      status: 'pending',
+      progress: 0,
+      downloadUrl: null,
+      rw: '', rh: '', rs: '',
+    })
+    added = true
+  }
+  if (added) render()
+}
+
+function removeItem(id) { queue = queue.filter(i => i.id !== id); render() }
+function clearAll() { queue = []; render() }
+function setTarget(id, val) { const i = queue.find(x => x.id === id); if (i) { i.target = val; render() } }
+function setResize(id, axis, val) {
+  const i = queue.find(x => x.id === id); if (!i) return
+  if (axis === 'w') i.rw = val
+  else if (axis === 'h') i.rh = val
+  else i.rs = val
+}
+
+function convertAll() {
+  const pending = queue.filter(i => i.status === 'pending')
+  if (!pending.length) return
+  pending.forEach(i => { i.status = 'converting'; i.progress = 0 })
+  render()
+  pending.forEach(i => runConvert(i))
+}
+
+function convertOne(id) {
+  const i = queue.find(x => x.id === id)
+  if (!i || i.status !== 'pending') return
+  i.status = 'converting'; i.progress = 0
+  render()
+  runConvert(i)
+}
+
+async function runConvert(item) {
+  const fd = new FormData()
+  fd.append('file', item.file)
+  fd.append('target_format', item.target)
+  if (item.rw) fd.append('resize_width', item.rw)
+  if (item.rh) fd.append('resize_height', item.rh)
+  if (item.rs) fd.append('resize_scale', parseFloat(item.rs) / 100)
+
+  try {
+    const r = await fetch('/api/convert', { method: 'POST', body: fd })
+    if (!r.ok) { item.status = 'failed'; render(); return }
+    const d = await r.json()
+    item.jobId = d.job_id
+    pollJob(item)
+  } catch {
+    item.status = 'failed'; render()
+  }
+}
+
+function pollJob(item) {
+  // Animate progress while waiting
+  const anim = setInterval(() => {
+    if (item.progress < 85) item.progress += Math.random() * 6 + 2
+    render()
+  }, 400)
+
+  const poll = setInterval(async () => {
+    try {
+      const r = await fetch(`/api/jobs/${item.jobId}`)
+      const d = await r.json()
+      if (d.status === 'done') {
+        clearInterval(anim); clearInterval(poll)
+        item.status = 'done'; item.progress = 100
+        item.downloadUrl = d.download_url
+        if (document.getElementById('optAutoDl').checked) triggerDownload(item)
+        render()
+      } else if (d.status === 'failed') {
+        clearInterval(anim); clearInterval(poll)
+        item.status = 'failed'; render()
+      }
+    } catch { clearInterval(anim); clearInterval(poll); item.status = 'failed'; render() }
+  }, 1000)
+}
+
+function downloadAll() {
+  queue.filter(i => i.status === 'done').forEach(i => triggerDownload(i))
+}
+
+function triggerDownload(item) {
+  const keepName = document.getElementById('optKeepName').checked
+  const name = keepName ? item.file.name.replace(/\.[^/.]+$/, '') : 'converted'
+  const a = document.createElement('a')
+  a.href = item.downloadUrl
+  a.download = name + '.' + item.target
+  a.click()
+}
+
+function fileIcon(item) {
+  if (item.group === 'i') {
+    return `<svg viewBox="0 0 24 24" style="stroke:var(--green)"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+  }
+  if (item.ext === 'pdf') {
+    return `<svg viewBox="0 0 24 24" style="stroke:var(--accent)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>`
+  }
+  return `<svg viewBox="0 0 24 24" style="stroke:var(--accent)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`
+}
+
+function render() {
+  const done = queue.filter(i => i.status === 'done').length
+  const conv = queue.filter(i => i.status === 'converting').length
+
+  document.getElementById('queueTitle').innerHTML = `Queue · <b>${queue.length} file${queue.length !== 1 ? 's' : ''}</b>`
+  document.getElementById('topstats').innerHTML = `
+    <span class="stat"><b>${queue.length}</b> queued</span>
+    <span class="stat"><b>${done}</b> done</span>
+    ${conv ? `<span class="stat"><b>${conv}</b> converting</span>` : ''}
+  `
+
+  const area = document.getElementById('queueArea')
+  if (!queue.length) {
+    area.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <p>No files yet.<br>Drop files in the sidebar to get started.</p>
+    </div>`
+    return
+  }
+
+  area.innerHTML = `<table>
+    <thead><tr>
+      <th style="width:42%">File</th>
+      <th style="width:20%">Convert to</th>
+      <th style="width:18%">Status</th>
+      <th style="width:20%"></th>
+    </tr></thead>
+    <tbody>${queue.map(item => `
+    <tr>
+      <td>
+        <div class="fc">
+          <div class="fi ${item.group}">${fileIcon(item)}</div>
+          <div>
+            <div class="fn" title="${item.file.name}">${item.file.name}</div>
+            <div class="fm">${fmtSize(item.file.size)} · ${item.ext.toUpperCase()}</div>
+            ${item.group === 'i' && item.status === 'pending' ? `
+            <div class="ri-row">
+              <span class="rl">W</span>
+              <input class="ri" type="number" placeholder="px" value="${item.rw}"
+                onchange="setResize('${item.id}','w',this.value)" />
+              <span class="rsep">×</span>
+              <span class="rl">H</span>
+              <input class="ri" type="number" placeholder="px" value="${item.rh}"
+                onchange="setResize('${item.id}','h',this.value)" />
+              <span class="rsep">or</span>
+              <input class="ri" type="number" placeholder="%" style="width:46px" value="${item.rs}"
+                onchange="setResize('${item.id}','s',this.value)" />
+              <span class="rl">%</span>
+            </div>` : ''}
+            ${item.status === 'converting' ? `
+            <div class="pbar"><div class="pbar-fill" style="width:${Math.min(Math.round(item.progress), 100)}%"></div></div>` : ''}
+          </div>
+        </div>
+      </td>
+      <td>
+        ${item.status === 'pending'
+          ? `<select onchange="setTarget('${item.id}',this.value)">${TARGETS[item.ext].map(t => `<option value="${t}" ${t === item.target ? 'selected' : ''}>${t.toUpperCase()}</option>`).join('')}</select>`
+          : `<span style="color:var(--muted);font-size:12px">${item.target.toUpperCase()}</span>`}
+      </td>
+      <td><span class="pill ${item.status}">${{pending:'Pending',converting:'Converting…',done:'Done',failed:'Failed'}[item.status]}</span></td>
+      <td>
+        <div class="tda">
+          ${item.status === 'done' ? `
+          <a class="icon-btn dl" href="${item.downloadUrl}"
+            download="${(document.getElementById('optKeepName')?.checked ? item.file.name.replace(/\.[^/.]+$/,'') : 'converted') + '.' + item.target}"
+            title="Download">
+            <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+          </a>` : ''}
+          ${item.status === 'pending' ? `
+          <button class="icon-btn play" onclick="convertOne('${item.id}')" title="Convert this file">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>` : ''}
+          <button class="icon-btn rmv" onclick="removeItem('${item.id}')" title="Remove">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`
+}
+
+render()
+</script>
+</body>
+</html>

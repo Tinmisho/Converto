@@ -1,0 +1,6 @@
+celery==5.4.0
+redis==5.0.7
+pyvips==2.2.3
+python-docx==1.1.2
+pypandoc==1.13
+pillow==10.4.0
